@@ -1,15 +1,115 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "crawl4ai-mcp"
+name = "mcp-crawl4ai-rag"
 version = "0.1.0"
-description = "MCP server for integrating web crawling and RAG into AI agents and AI coding assistants"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "crawl4ai==0.6.2",
-    "mcp==1.7.1",
-    "supabase==2.15.1",
-    "openai==1.71.0",
-    "dotenv==0.9.9",
-    "sentence-transformers>=4.1.0",
-    "neo4j>=5.28.1",
+description = "MCP server for Crawl4AI with RAG and Knowledge Graph capabilities"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"},
 ]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    # Core MCP and web crawling
+    "crawl4ai>=0.3.7",
+    "mcp>=1.0.0",
+    
+    # Knowledge Graph and Database
+    "neo4j>=5.15.0",
+    "supabase>=2.0.0",
+    
+    # AI and Language Processing
+    "openai>=1.0.0",
+    "anthropic>=0.3.0",
+    "sentence-transformers>=2.2.0",
+    
+    # Web and HTTP
+    "httpx>=0.25.0",
+    "aiohttp>=3.8.0",
+    "requests>=2.31.0",
+    
+    # Data Processing
+    "pandas>=2.1.0",
+    "numpy>=1.24.0",
+    "python-dotenv>=1.0.0",
+    
+    # Async and Concurrency
+    "asyncio>=3.4.3",
+    "uvloop>=0.17.0",
+    
+    # Development and Testing
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/mcp-crawl4ai-rag"
+Repository = "https://github.com/yourusername/mcp-crawl4ai-rag"
+Issues = "https://github.com/yourusername/mcp-crawl4ai-rag/issues"
+
+[project.scripts]
+mcp-crawl4ai-rag = "src.crawl4ai_mcp:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "knowledge_graphs*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"

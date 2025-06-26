@@ -1,0 +1,9 @@
+services:
+  analytics:
+    ports: []
+
+  kong:
+    ports: []
+
+  supavisor:
+    ports: []

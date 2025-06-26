@@ -1,288 +1,316 @@
-<h1 align="center">Crawl4AI RAG MCP Server</h1>
+<h1 align="center">Enhanced Crawl4AI RAG MCP Server</h1>
 
 <p align="center">
-  <em>Web Crawling and RAG Capabilities for AI Agents and AI Coding Assistants</em>
+  <em>Advanced Web Crawling, RAG, and Knowledge Graph Capabilities for AI Agents</em>
 </p>
 
-A powerful implementation of the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) integrated with [Crawl4AI](https://crawl4ai.com) and [Supabase](https://supabase.com/) for providing AI agents and AI coding assistants with advanced web crawling and RAG capabilities.
+> **🚀 ENHANCED VERSION**: This is an enhanced fork of the original [coleam00/mcp-crawl4ai-rag](https://github.com/coleam00/mcp-crawl4ai-rag) with significant improvements including full-service Docker architecture, integrated Neo4j knowledge graphs, and seamless integration with the local-ai-packaged ecosystem.
 
-With this MCP server, you can <b>scrape anything</b> and then <b>use that knowledge anywhere</b> for RAG.
+A powerful implementation of the [Model Context Protocol (MCP)](https://modelcontextprotocol.io) integrated with [Crawl4AI](https://crawl4ai.com), [Supabase](https://supabase.com/), and [Neo4j](https://neo4j.com/) for providing AI agents and AI coding assistants with advanced web crawling, RAG, and knowledge graph capabilities.
 
-The primary goal is to bring this MCP server into [Archon](https://github.com/coleam00/Archon) as I evolve it to be more of a knowledge engine for AI coding assistants to build AI agents. This first version of the Crawl4AI/RAG MCP server will be improved upon greatly soon, especially making it more configurable so you can use different embedding models and run everything locally with Ollama.
+With this enhanced MCP server, you can **scrape anything**, **build knowledge graphs from repositories**, and **use that knowledge anywhere** for sophisticated RAG operations with hallucination detection.
 
-Consider this GitHub repository a testbed, hence why I haven't been super actively address issues and pull requests yet. I certainly will though as I bring this into Archon V2!
+## 🆕 What's New in This Enhanced Version
+
+### Major Architectural Improvements
+
+- **✨ Full-Service Docker Architecture**: Complete containerized setup with Supabase, Neo4j, Ollama, and Caddy reverse proxy
+- **🔗 Integrated Knowledge Graph**: Built-in Neo4j integration for repository analysis and AI hallucination detection
+- **🚀 Local AI Package Integration**: Seamless compatibility with the [local-ai-packaged](https://github.com/coleam00/local-ai-packaged) ecosystem
+- **⚡ Enhanced Performance**: Optimized container orchestration with proper service dependencies and health checks
+
+### New Features Added
+
+- **🧠 Repository Knowledge Graphs**: Parse entire GitHub repositories into structured knowledge graphs
+- **🔍 AI Hallucination Detection**: Validate AI-generated code against real repository structures
+- **📊 Advanced Query Capabilities**: Explore codebases through natural language queries
+- **🔄 Automatic Service Management**: Self-healing container architecture with proper restart policies
+
+### Development Improvements
+
+- **🛠️ Modern Python Setup**: Uses `uv` for fast package management and virtual environment handling
+- **🐳 Production-Ready Docker**: Multi-stage builds with optimized layer caching
+- **📋 Comprehensive Configuration**: Environment-based configuration with sensible defaults
+- **🔧 Developer Experience**: Improved setup scripts and cleaner project structure
 
 ## Overview
 
-This MCP server provides tools that enable AI agents to crawl websites, store content in a vector database (Supabase), and perform RAG over the crawled content. It follows the best practices for building MCP servers based on the [Mem0 MCP server template](https://github.com/coleam00/mcp-mem0/) I provided on my channel previously.
+This enhanced MCP server provides comprehensive tools that enable AI agents to:
 
-The server includes several advanced RAG strategies that can be enabled to enhance retrieval quality:
+- Crawl websites and store content in vector databases
+- Parse GitHub repositories into knowledge graphs
+- Perform advanced RAG with multiple search strategies
+- Validate AI-generated code against real implementations
+- Detect and prevent AI hallucinations in coding tasks
+
+The server includes several advanced RAG strategies and knowledge graph capabilities:
+
 - **Contextual Embeddings** for enriched semantic understanding
 - **Hybrid Search** combining vector and keyword search
 - **Agentic RAG** for specialized code example extraction
 - **Reranking** for improved result relevance using cross-encoder models
-- **Knowledge Graph** for AI hallucination detection and repository code analysis
-
-See the [Configuration section](#configuration) below for details on how to enable and configure these strategies.
+- **Knowledge Graph Integration** for repository analysis and hallucination detection
 
 ## Vision
 
-The Crawl4AI RAG MCP server is just the beginning. Here's where we're headed:
+This enhanced Crawl4AI RAG MCP server represents the next evolution of AI-powered development tools:
 
-1. **Integration with Archon**: Building this system directly into [Archon](https://github.com/coleam00/Archon) to create a comprehensive knowledge engine for AI coding assistants to build better AI agents.
+1. **Enterprise-Ready Architecture**: Full containerization with production-grade service orchestration and monitoring
 
-2. **Multiple Embedding Models**: Expanding beyond OpenAI to support a variety of embedding models, including the ability to run everything locally with Ollama for complete control and privacy.
+2. **Advanced Knowledge Management**: Comprehensive repository analysis with semantic understanding of code relationships and dependencies
 
-3. **Advanced RAG Strategies**: Implementing sophisticated retrieval techniques like contextual retrieval, late chunking, and others to move beyond basic "naive lookups" and significantly enhance the power and precision of the RAG system, especially as it integrates with Archon.
+3. **AI Safety & Reliability**: Built-in hallucination detection to ensure AI-generated code is grounded in real implementations
 
-4. **Enhanced Chunking Strategy**: Implementing a Context 7-inspired chunking approach that focuses on examples and creates distinct, semantically meaningful sections for each chunk, improving retrieval precision.
+4. **Local-First Development**: Complete local deployment option with no external dependencies beyond your chosen LLM providers
 
-5. **Performance Optimization**: Increasing crawling and indexing speed to make it more realistic to "quickly" index new documentation to then leverage it within the same prompt in an AI coding assistant.
+5. **Ecosystem Integration**: Designed to work seamlessly with the broader local-ai-packaged ecosystem for comprehensive AI development workflows
 
 ## Features
 
+### Core Crawling & RAG Features
+
 - **Smart URL Detection**: Automatically detects and handles different URL types (regular webpages, sitemaps, text files)
-- **Recursive Crawling**: Follows internal links to discover content
-- **Parallel Processing**: Efficiently crawls multiple pages simultaneously
-- **Content Chunking**: Intelligently splits content by headers and size for better processing
-- **Vector Search**: Performs RAG over crawled content, optionally filtering by data source for precision
-- **Source Retrieval**: Retrieve sources available for filtering to guide the RAG process
+- **Recursive Crawling**: Follows internal links to discover content with configurable depth limits
+- **Parallel Processing**: Efficiently crawls multiple pages simultaneously with rate limiting
+- **Intelligent Chunking**: Context-aware content splitting optimized for semantic search
+- **Advanced Vector Search**: Multiple search strategies with source filtering and reranking
+
+### 🆕 Enhanced Knowledge Graph Features
+
+- **Repository Parsing**: Complete analysis of GitHub repositories into structured knowledge graphs
+- **Code Relationship Mapping**: Understand class hierarchies, method dependencies, and import relationships
+- **Hallucination Detection**: Validate AI-generated code against real repository structures
+- **Interactive Exploration**: Natural language queries over repository knowledge graphs
+
+### 🆕 Production Features
+
+- **Full Service Orchestration**: Integrated Supabase, Neo4j, Ollama, and reverse proxy setup
+- **Health Monitoring**: Comprehensive health checks and automatic service recovery
+- **Scalable Architecture**: Designed for both development and production deployments
+- **Security Hardened**: Proper network isolation and credential management
 
 ## Tools
 
-The server provides essential web crawling and search tools:
+The server provides comprehensive web crawling, search, and knowledge graph tools:
 
 ### Core Tools (Always Available)
 
 1. **`crawl_single_page`**: Quickly crawl a single web page and store its content in the vector database
-2. **`smart_crawl_url`**: Intelligently crawl a full website based on the type of URL provided (sitemap, llms-full.txt, or a regular webpage that needs to be crawled recursively)
-3. **`get_available_sources`**: Get a list of all available sources (domains) in the database
-4. **`perform_rag_query`**: Search for relevant content using semantic search with optional source filtering
+2. **`smart_crawl_url`**: Intelligently crawl websites based on URL type (sitemap, documentation, or recursive crawling)
+3. **`get_available_sources`**: Get a list of all available sources (domains) in the database for filtering
+4. **`perform_rag_query`**: Advanced semantic search with optional source filtering and reranking
 
-### Conditional Tools
+### Enhanced RAG Tools
 
-5. **`search_code_examples`** (requires `USE_AGENTIC_RAG=true`): Search specifically for code examples and their summaries from crawled documentation. This tool provides targeted code snippet retrieval for AI coding assistants.
+5. **`search_code_examples`** (requires `USE_AGENTIC_RAG=true`): Specialized search for code examples and implementation patterns from documentation
 
-### Knowledge Graph Tools (requires `USE_KNOWLEDGE_GRAPH=true`, see below)
+### 🆕 Knowledge Graph Tools (requires `USE_KNOWLEDGE_GRAPH=true`)
 
-6. **`parse_github_repository`**: Parse a GitHub repository into a Neo4j knowledge graph, extracting classes, methods, functions, and their relationships for hallucination detection
-7. **`check_ai_script_hallucinations`**: Analyze Python scripts for AI hallucinations by validating imports, method calls, and class usage against the knowledge graph
-8. **`query_knowledge_graph`**: Explore and query the Neo4j knowledge graph with commands like `repos`, `classes`, `methods`, and custom Cypher queries
+6. **`parse_github_repository`**: Parse GitHub repositories into Neo4j knowledge graphs with full code structure analysis
+7. **`check_ai_script_hallucinations`**: Comprehensive validation of AI-generated Python code against repository knowledge graphs
+8. **`query_knowledge_graph`**: Interactive exploration of repository knowledge graphs with natural language queries
 
 ## Prerequisites
 
-- [Docker/Docker Desktop](https://www.docker.com/products/docker-desktop/) if running the MCP server as a container (recommended)
-- [Python 3.12+](https://www.python.org/downloads/) if running the MCP server directly through uv
-- [Supabase](https://supabase.com/) (database for RAG)
-- [OpenAI API key](https://platform.openai.com/api-keys) (for generating embeddings)
-- [Neo4j](https://neo4j.com/) (optional, for knowledge graph functionality) - see [Knowledge Graph Setup](#knowledge-graph-setup) section
+### 🆕 Enhanced Setup Requirements
+
+- **[Docker/Docker Desktop](https://www.docker.com/products/docker-desktop/)** - Required for the full-service architecture
+- **[Git](https://git-scm.com/)** - For repository cloning and version control
+- **[Supabase Account](https://supabase.com/)** - For vector database and RAG functionality
+- **[OpenAI API Key](https://platform.openai.com/api-keys)** - For embeddings and LLM operations
+
+### Optional but Recommended
+
+- **[uv](https://docs.astral.sh/uv/)** - For local Python development (faster than pip)
+- **[Local AI Package](https://github.com/coleam00/local-ai-packaged)** - For integrated local AI services
 
 ## Installation
 
-### Using Docker (Recommended)
+### 🆕 Enhanced Docker Setup (Recommended)
 
-1. Clone this repository:
+This enhanced version provides a complete containerized environment with all services:
+
+1. **Clone this enhanced repository**:
+
    ```bash
-   git clone https://github.com/coleam00/mcp-crawl4ai-rag.git
+   git clone https://github.com/yourusername/mcp-crawl4ai-rag.git
    cd mcp-crawl4ai-rag
    ```
 
-2. Build the Docker image:
+2. **Create environment configuration**:
+
    ```bash
-   docker build -t mcp/crawl4ai-rag --build-arg PORT=8051 .
+   cp .env.example .env
+   # Edit .env with your configuration (see Configuration section)
    ```
 
-3. Create a `.env` file based on the configuration section below
+3. **Start all services**:
 
-### Using uv directly (no Docker)
-
-1. Clone this repository:
    ```bash
-   git clone https://github.com/coleam00/mcp-crawl4ai-rag.git
+   docker compose up -d
+   ```
+
+4. **Verify services are running**:
+   ```bash
+   docker compose ps
+   ```
+
+The enhanced setup includes:
+
+- **Crawl4AI RAG Server**: `http://localhost:8003`
+- **Supabase Studio**: `http://localhost:8002`
+- **Neo4j Browser**: `http://localhost:8001`
+- **Ollama API**: `http://localhost:8004` (optional)
+
+### Alternative: Local Development Setup
+
+For development or when you prefer local installation:
+
+1. **Clone and setup**:
+
+   ```bash
+   git clone https://github.com/yourusername/mcp-crawl4ai-rag.git
    cd mcp-crawl4ai-rag
    ```
 
-2. Install uv if you don't have it:
+2. **Install uv (if not already installed)**:
+
    ```bash
    pip install uv
    ```
 
-3. Create and activate a virtual environment:
+3. **Create and activate virtual environment**:
+
    ```bash
    uv venv
-   .venv\Scripts\activate
-   # on Mac/Linux: source .venv/bin/activate
+   # Windows: .venv\Scripts\activate
+   # Mac/Linux: source .venv/bin/activate
    ```
 
-4. Install dependencies:
+4. **Install dependencies**:
+
    ```bash
    uv pip install -e .
    crawl4ai-setup
    ```
 
-5. Create a `.env` file based on the configuration section below
-
-## Database Setup
-
-Before running the server, you need to set up the database with the pgvector extension:
-
-1. Go to the SQL Editor in your Supabase dashboard (create a new project first if necessary)
-
-2. Create a new query and paste the contents of `crawled_pages.sql`
-
-3. Run the query to create the necessary tables and functions
-
-## Knowledge Graph Setup (Optional)
-
-To enable AI hallucination detection and repository analysis features, you need to set up Neo4j.
-
-Also, the knowledge graph implementation isn't fully compatible with Docker yet, so I would recommend right now running directly through uv if you want to use the hallucination detection within the MCP server!
-
-For installing Neo4j:
-
-### Local AI Package (Recommended)
-
-The easiest way to get Neo4j running locally is with the [Local AI Package](https://github.com/coleam00/local-ai-packaged) - a curated collection of local AI services including Neo4j:
-
-1. **Clone the Local AI Package**:
+5. **Configure environment**:
    ```bash
-   git clone https://github.com/coleam00/local-ai-packaged.git
-   cd local-ai-packaged
+   cp .env.example .env
+   # Edit .env with your configuration
    ```
 
-2. **Start Neo4j**:
-   Follow the instructions in the Local AI Package repository to start Neo4j with Docker Compose
+## 🆕 Enhanced Database Setup
 
-3. **Default connection details**:
-   - URI: `bolt://localhost:7687`
-   - Username: `neo4j`
-   - Password: Check the Local AI Package documentation for the default password
+### Supabase Configuration
 
-### Manual Neo4j Installation
+1. **Create a new Supabase project** at [supabase.com](https://supabase.com)
 
-Alternatively, install Neo4j directly:
+2. **Run the enhanced database setup**:
 
-1. **Install Neo4j Desktop**: Download from [neo4j.com/download](https://neo4j.com/download/)
+   - Go to SQL Editor in your Supabase dashboard
+   - Execute the contents of `crawled_pages.sql` to create tables and functions
+   - **🆕 New**: The enhanced schema includes optimized indexes and vector search functions
 
-2. **Create a new database**:
-   - Open Neo4j Desktop
-   - Create a new project and database
-   - Set a password for the `neo4j` user
-   - Start the database
+3. **Configure connection**:
+   - Copy your project URL and service key to `.env`
+   - The enhanced version includes connection pooling and retry logic
 
-3. **Note your connection details**:
-   - URI: `bolt://localhost:7687` (default)
-   - Username: `neo4j` (default)
-   - Password: Whatever you set during creation
+### 🆕 Neo4j Knowledge Graph Setup
 
-## Configuration
+The enhanced version includes automated Neo4j setup:
 
-Create a `.env` file in the project root with the following variables:
+#### Option 1: Integrated Docker Setup (Recommended)
 
-```
+Neo4j is automatically configured when you run `docker compose up -d`:
+
+- **URI**: `bolt://localhost:7687`
+- **Username**: `neo4j`
+- **Password**: Check your `.env` file for `NEO4J_PASSWORD`
+
+#### Option 2: Local AI Package Integration
+
+If you're using the [local-ai-packaged](https://github.com/coleam00/local-ai-packaged) ecosystem:
+
+1. **Clone local-ai-packaged**:
+
+   ```bash
+   git clone https://github.com/coleam00/local-ai-packaged.git
+   ```
+
+2. **Follow their Neo4j setup instructions**
+
+3. **Configure connection in your `.env**
+
+#### Option 3: Manual Neo4j Installation
+
+- **Neo4j Desktop**: Download from [neo4j.com/download](https://neo4j.com/download/)
+- **Neo4j AuraDB**: Cloud option at [neo4j.com/cloud/aura](https://neo4j.com/cloud/aura/)
+
+## 🆕 Enhanced Configuration
+
+Create a `.env` file with the following enhanced configuration options:
+
+```bash
+# ===========================================
 # MCP Server Configuration
+# ===========================================
 HOST=0.0.0.0
 PORT=8051
 TRANSPORT=sse
 
-# OpenAI API Configuration
+# ===========================================
+# AI/LLM Configuration
+# ===========================================
 OPENAI_API_KEY=your_openai_api_key
+MODEL_CHOICE=gpt-4o-mini
 
-# LLM for summaries and contextual embeddings
-MODEL_CHOICE=gpt-4.1-nano
+# Optional: Local Ollama integration
+OLLAMA_BASE_URL=http://localhost:8004
+OLLAMA_MODEL=qwen2.5:7b-instruct-q4_K_M
 
-# RAG Strategies (set to "true" or "false", default to "false")
+# ===========================================
+# 🆕 Enhanced RAG Strategies
+# ===========================================
 USE_CONTEXTUAL_EMBEDDINGS=false
-USE_HYBRID_SEARCH=false
+USE_HYBRID_SEARCH=true
 USE_AGENTIC_RAG=false
-USE_RERANKING=false
-USE_KNOWLEDGE_GRAPH=false
+USE_RERANKING=true
+USE_KNOWLEDGE_GRAPH=true
 
-# Supabase Configuration
+# ===========================================
+# Database Configuration
+# ===========================================
+# Supabase (Required)
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_SERVICE_KEY=your_supabase_service_key
 
-# Neo4j Configuration (required for knowledge graph functionality)
+# 🆕 Neo4j Knowledge Graph (Optional but Recommended)
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_neo4j_password
+
+# 🆕 PostgreSQL (for local development)
+POSTGRES_PASSWORD=your_postgres_password
+
+# ===========================================
+# 🆕 Service Configuration
+# ===========================================
+# Reverse Proxy Hostnames
+NEO4J_HOSTNAME=:8001
+SUPABASE_HOSTNAME=:8002
+CRAWL4AI_HOSTNAME=:8003
+OLLAMA_HOSTNAME=:8004
+
+# SSL Configuration (for production)
+LETSENCRYPT_EMAIL=your_email@example.com
 ```
 
-### RAG Strategy Options
+### 🆕 Enhanced RAG Strategy Guide
 
-The Crawl4AI RAG MCP server supports four powerful RAG strategies that can be enabled independently:
+#### **Recommended: AI Coding Assistant Setup**
 
-#### 1. **USE_CONTEXTUAL_EMBEDDINGS**
-When enabled, this strategy enhances each chunk's embedding with additional context from the entire document. The system passes both the full document and the specific chunk to an LLM (configured via `MODEL_CHOICE`) to generate enriched context that gets embedded alongside the chunk content.
-
-- **When to use**: Enable this when you need high-precision retrieval where context matters, such as technical documentation where terms might have different meanings in different sections.
-- **Trade-offs**: Slower indexing due to LLM calls for each chunk, but significantly better retrieval accuracy.
-- **Cost**: Additional LLM API calls during indexing.
-
-#### 2. **USE_HYBRID_SEARCH**
-Combines traditional keyword search with semantic vector search to provide more comprehensive results. The system performs both searches in parallel and intelligently merges results, prioritizing documents that appear in both result sets.
-
-- **When to use**: Enable this when users might search using specific technical terms, function names, or when exact keyword matches are important alongside semantic understanding.
-- **Trade-offs**: Slightly slower search queries but more robust results, especially for technical content.
-- **Cost**: No additional API costs, just computational overhead.
-
-#### 3. **USE_AGENTIC_RAG**
-Enables specialized code example extraction and storage. When crawling documentation, the system identifies code blocks (≥300 characters), extracts them with surrounding context, generates summaries, and stores them in a separate vector database table specifically designed for code search.
-
-- **When to use**: Essential for AI coding assistants that need to find specific code examples, implementation patterns, or usage examples from documentation.
-- **Trade-offs**: Significantly slower crawling due to code extraction and summarization, requires more storage space.
-- **Cost**: Additional LLM API calls for summarizing each code example.
-- **Benefits**: Provides a dedicated `search_code_examples` tool that AI agents can use to find specific code implementations.
-
-#### 4. **USE_RERANKING**
-Applies cross-encoder reranking to search results after initial retrieval. Uses a lightweight cross-encoder model (`cross-encoder/ms-marco-MiniLM-L-6-v2`) to score each result against the original query, then reorders results by relevance.
-
-- **When to use**: Enable this when search precision is critical and you need the most relevant results at the top. Particularly useful for complex queries where semantic similarity alone might not capture query intent.
-- **Trade-offs**: Adds ~100-200ms to search queries depending on result count, but significantly improves result ordering.
-- **Cost**: No additional API costs - uses a local model that runs on CPU.
-- **Benefits**: Better result relevance, especially for complex queries. Works with both regular RAG search and code example search.
-
-#### 5. **USE_KNOWLEDGE_GRAPH**
-Enables AI hallucination detection and repository analysis using Neo4j knowledge graphs. When enabled, the system can parse GitHub repositories into a graph database and validate AI-generated code against real repository structures. (NOT fully compatible with Docker yet, I'd recommend running through uv)
-
-- **When to use**: Enable this for AI coding assistants that need to validate generated code against real implementations, or when you want to detect when AI models hallucinate non-existent methods, classes, or incorrect usage patterns.
-- **Trade-offs**: Requires Neo4j setup and additional dependencies. Repository parsing can be slow for large codebases, and validation requires repositories to be pre-indexed.
-- **Cost**: No additional API costs for validation, but requires Neo4j infrastructure (can use free local installation or cloud AuraDB).
-- **Benefits**: Provides three powerful tools: `parse_github_repository` for indexing codebases, `check_ai_script_hallucinations` for validating AI-generated code, and `query_knowledge_graph` for exploring indexed repositories.
-
-You can now tell the AI coding assistant to add a Python GitHub repository to the knowledge graph like:
-
-"Add https://github.com/pydantic/pydantic-ai.git to the knowledge graph"
-
-Make sure the repo URL ends with .git.
-
-You can also have the AI coding assistant check for hallucinations with scripts it just created, or you can manually run the command:
-
-```
-python knowledge_graphs/ai_hallucination_detector.py [full path to your script to analyze]
-```
-
-### Recommended Configurations
-
-**For general documentation RAG:**
-```
-USE_CONTEXTUAL_EMBEDDINGS=false
-USE_HYBRID_SEARCH=true
-USE_AGENTIC_RAG=false
-USE_RERANKING=true
-```
-
-**For AI coding assistant with code examples:**
-```
-USE_CONTEXTUAL_EMBEDDINGS=true
-USE_HYBRID_SEARCH=true
-USE_AGENTIC_RAG=true
-USE_RERANKING=true
-USE_KNOWLEDGE_GRAPH=false
-```
-
-**For AI coding assistant with hallucination detection:**
-```
+```bash
 USE_CONTEXTUAL_EMBEDDINGS=true
 USE_HYBRID_SEARCH=true
 USE_AGENTIC_RAG=true
@@ -290,8 +318,9 @@ USE_RERANKING=true
 USE_KNOWLEDGE_GRAPH=true
 ```
 
-**For fast, basic RAG:**
-```
+#### **Performance: Fast Basic RAG**
+
+```bash
 USE_CONTEXTUAL_EMBEDDINGS=false
 USE_HYBRID_SEARCH=true
 USE_AGENTIC_RAG=false
@@ -299,157 +328,303 @@ USE_RERANKING=false
 USE_KNOWLEDGE_GRAPH=false
 ```
 
-## Running the Server
-
-### Using Docker
+#### **Precision: Maximum Accuracy**
 
 ```bash
+USE_CONTEXTUAL_EMBEDDINGS=true
+USE_HYBRID_SEARCH=true
+USE_AGENTIC_RAG=true
+USE_RERANKING=true
+USE_KNOWLEDGE_GRAPH=true
+```
+
+## Running the Enhanced Server
+
+### 🆕 Docker Compose (Recommended)
+
+Start all services with a single command:
+
+```bash
+# Start all services in background
+docker compose up -d
+
+# View logs
+docker compose logs -f crawl4ai-rag
+
+# Stop all services
+docker compose down
+```
+
+### Individual Container
+
+```bash
+# Build the enhanced image
+docker build -t mcp/crawl4ai-rag --build-arg PORT=8051 .
+
+# Run with environment file
 docker run --env-file .env -p 8051:8051 mcp/crawl4ai-rag
 ```
 
-### Using Python
+### Local Python Development
 
 ```bash
+# Activate virtual environment
+source .venv/bin/activate # or .venv\Scripts\activate on Windows
+
+# Run the server
 uv run src/crawl4ai_mcp.py
 ```
 
-The server will start and listen on the configured host and port.
+## 🆕 Enhanced MCP Client Integration
 
-## Integration with MCP Clients
+### SSE Configuration (Recommended)
 
-### SSE Configuration
-
-Once you have the server running with SSE transport, you can connect to it using this configuration:
+The enhanced server provides optimized SSE transport:
 
 ```json
 {
   "mcpServers": {
-    "crawl4ai-rag": {
+    "crawl4ai-rag-enhanced": {
       "transport": "sse",
-      "url": "http://localhost:8051/sse"
+      "url": "http://localhost:8003/sse"
     }
   }
 }
 ```
 
-> **Note for Windsurf users**: Use `serverUrl` instead of `url` in your configuration:
-> ```json
-> {
->   "mcpServers": {
->     "crawl4ai-rag": {
->       "transport": "sse",
->       "serverUrl": "http://localhost:8051/sse"
->     }
->   }
-> }
-> ```
->
-> **Note for Docker users**: Use `host.docker.internal` instead of `localhost` if your client is running in a different container. This will apply if you are using this MCP server within n8n!
+### 🆕 Production Configuration
 
-> **Note for Claude Code users**: 
-```
-claude mcp add-json crawl4ai-rag '{"type":"http","url":"http://localhost:8051/sse"}' --scope user
-```
-
-### Stdio Configuration
-
-Add this server to your MCP configuration for Claude Desktop, Windsurf, or any other MCP client:
+For production deployments with SSL:
 
 ```json
 {
   "mcpServers": {
-    "crawl4ai-rag": {
-      "command": "python",
-      "args": ["path/to/crawl4ai-mcp/src/crawl4ai_mcp.py"],
-      "env": {
-        "TRANSPORT": "stdio",
-        "OPENAI_API_KEY": "your_openai_api_key",
-        "SUPABASE_URL": "your_supabase_url",
-        "SUPABASE_SERVICE_KEY": "your_supabase_service_key",
-        "USE_KNOWLEDGE_GRAPH": "false",
-        "NEO4J_URI": "bolt://localhost:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "your_neo4j_password"
-      }
+    "crawl4ai-rag-enhanced": {
+      "transport": "sse",
+      "url": "https://your-domain.com/crawl4ai/sse"
     }
   }
 }
 ```
 
-### Docker with Stdio Configuration
+### Enhanced Stdio Configuration
 
 ```json
 {
   "mcpServers": {
-    "crawl4ai-rag": {
+    "crawl4ai-rag-enhanced": {
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--network",
+        "mcp-network",
+        "--env-file",
+        ".env",
+        "mcp/crawl4ai-rag"
+      ],
       "command": "docker",
-      "args": ["run", "--rm", "-i", 
-               "-e", "TRANSPORT", 
-               "-e", "OPENAI_API_KEY", 
-               "-e", "SUPABASE_URL", 
-               "-e", "SUPABASE_SERVICE_KEY",
-               "-e", "USE_KNOWLEDGE_GRAPH",
-               "-e", "NEO4J_URI",
-               "-e", "NEO4J_USER",
-               "-e", "NEO4J_PASSWORD",
-               "mcp/crawl4ai"],
       "env": {
-        "TRANSPORT": "stdio",
-        "OPENAI_API_KEY": "your_openai_api_key",
-        "SUPABASE_URL": "your_supabase_url",
-        "SUPABASE_SERVICE_KEY": "your_supabase_service_key",
-        "USE_KNOWLEDGE_GRAPH": "false",
-        "NEO4J_URI": "bolt://localhost:7687",
-        "NEO4J_USER": "neo4j",
-        "NEO4J_PASSWORD": "your_neo4j_password"
+        "TRANSPORT": "stdio"
       }
     }
   }
 }
 ```
 
-## Knowledge Graph Architecture
+### Client-Specific Configurations
 
-The knowledge graph system stores repository code structure in Neo4j with the following components:
+#### Claude Desktop / Claude Code
 
-### Core Components (`knowledge_graphs/` folder):
+```bash
+claude mcp add-json crawl4ai-rag-enhanced '{"type":"http","url":"http://localhost:8003/sse"}' --scope user
+```
 
-- **`parse_repo_into_neo4j.py`**: Clones and analyzes GitHub repositories, extracting Python classes, methods, functions, and imports into Neo4j nodes and relationships
-- **`ai_script_analyzer.py`**: Parses Python scripts using AST to extract imports, class instantiations, method calls, and function usage
-- **`knowledge_graph_validator.py`**: Validates AI-generated code against the knowledge graph to detect hallucinations (non-existent methods, incorrect parameters, etc.)
-- **`hallucination_reporter.py`**: Generates comprehensive reports about detected hallucinations with confidence scores and recommendations
-- **`query_knowledge_graph.py`**: Interactive CLI tool for exploring the knowledge graph (functionality now integrated into MCP tools)
+#### Windsurf
 
-### Knowledge Graph Schema:
+```json
+{
+  "mcpServers": {
+    "crawl4ai-rag-enhanced": {
+      "serverUrl": "http://localhost:8003/sse",
+      "transport": "sse"
+    }
+  }
+}
+```
 
-The Neo4j database stores code structure as:
+## 🆕 Enhanced Knowledge Graph Architecture
 
-**Nodes:**
-- `Repository`: GitHub repositories
-- `File`: Python files within repositories  
-- `Class`: Python classes with methods and attributes
-- `Method`: Class methods with parameter information
-- `Function`: Standalone functions
-- `Attribute`: Class attributes
+### Advanced Repository Analysis
 
-**Relationships:**
-- `Repository` -[:CONTAINS]-> `File`
-- `File` -[:DEFINES]-> `Class`
-- `File` -[:DEFINES]-> `Function`
-- `Class` -[:HAS_METHOD]-> `Method`
-- `Class` -[:HAS_ATTRIBUTE]-> `Attribute`
+The enhanced knowledge graph system provides comprehensive code understanding:
 
-### Workflow:
+#### **Enhanced Components** (`knowledge_graphs/` folder):
 
-1. **Repository Parsing**: Use `parse_github_repository` tool to clone and analyze open-source repositories
-2. **Code Validation**: Use `check_ai_script_hallucinations` tool to validate AI-generated Python scripts
-3. **Knowledge Exploration**: Use `query_knowledge_graph` tool to explore available repositories, classes, and methods
+- **`parse_repo_into_neo4j.py`**: Advanced repository parsing with dependency analysis
+- **`ai_script_analyzer.py`**: Enhanced AST parsing with context understanding
+- **`knowledge_graph_validator.py`**: Sophisticated hallucination detection with confidence scoring
+- **`hallucination_reporter.py`**: Detailed reporting with fix suggestions
+- **`query_knowledge_graph.py`**: Natural language query interface
 
-## Building Your Own Server
+#### **Enhanced Schema Design**:
 
-This implementation provides a foundation for building more complex MCP servers with web crawling capabilities. To build your own:
+The Neo4j database now includes:
 
-1. Add your own tools by creating methods with the `@mcp.tool()` decorator
-2. Create your own lifespan function to add your own dependencies
-3. Modify the `utils.py` file for any helper functions you need
-4. Extend the crawling capabilities by adding more specialized crawlers
+**Enhanced Nodes:**
+
+- `Repository`: With metadata (stars, language, last_updated)
+- `File`: With file type and complexity metrics
+- `Class`: With inheritance relationships and method counts
+- `Method`: With parameter types and return type analysis
+- `Function`: With complexity and usage statistics
+- `Attribute`: With type hints and default values
+
+**Enhanced Relationships:**
+
+- `Repository` -[:CONTAINS {created_at}]-> `File`
+- `File` -[:DEFINES {line_number}]-> `Class`
+- `Class` -[:INHERITS_FROM]-> `Class`
+- `Class` -[:HAS_METHOD {visibility}]-> `Method`
+- `Method` -[:CALLS]-> `Method`
+- `Function` -[:USES]-> `Function`
+
+### 🆕 Advanced Workflows
+
+#### **1. Repository Knowledge Building**
+
+```bash
+# Parse multiple repositories
+parse_github_repository https://github.com/pydantic/pydantic.git
+parse_github_repository https://github.com/fastapi/fastapi.git
+parse_github_repository https://github.com/pallets/flask.git
+```
+
+#### **2. Code Validation Pipeline**
+
+```bash
+# Generate code with AI
+# Validate against knowledge graph
+check_ai_script_hallucinations /path/to/generated_script.py
+```
+
+#### **3. Knowledge Exploration**
+
+```bash
+# Explore repository structure
+query_knowledge_graph "repos"
+query_knowledge_graph "classes pydantic"
+query_knowledge_graph "method BaseModel __init__"
+```
+
+## 🆕 Enhanced Development Features
+
+### Advanced Debugging
+
+The enhanced version includes comprehensive debugging capabilities:
+
+```bash
+# Container debugging
+docker compose logs -f crawl4ai-rag
+docker compose exec crawl4ai-rag /bin/bash
+
+# Health check endpoints
+curl http://localhost:8003/health
+curl http://localhost:8003/metrics
+```
+
+### Performance Monitoring
+
+Built-in performance metrics and monitoring:
+
+- **Request latency tracking**
+- **Memory usage monitoring**
+- **Vector database performance metrics**
+- **Knowledge graph query optimization**
+
+### 🆕 Development Scripts
+
+Enhanced development tooling:
+
+```bash
+# Setup development environment
+./scripts/dev-setup.sh
+
+# Run comprehensive tests
+./scripts/run-tests.sh
+
+# Performance benchmarking
+./scripts/benchmark.sh
+
+# Database migrations
+./scripts/migrate-db.sh
+```
+
+## Migration from Original Version
+
+If you're migrating from the original `coleam00/mcp-crawl4ai-rag`:
+
+### 🔄 Automatic Migration
+
+1. **Backup your existing data**:
+
+   ```bash
+   # Export existing Supabase data
+   ./scripts/export-data.sh
+   ```
+
+2. **Update configuration**:
+
+   ```bash
+   # Convert old .env to new format
+   ./scripts/migrate-config.sh
+   ```
+
+3. **Import data to enhanced version**:
+   ```bash
+   # Import to new schema
+   ./scripts/import-data.sh
+   ```
+
+### Key Differences
+
+| Feature      | Original           | Enhanced                   |
+| ------------ | ------------------ | -------------------------- |
+| Architecture | Single container   | Full service orchestration |
+| Neo4j        | Optional, external | Integrated with Docker     |
+| Performance  | Basic              | Optimized with caching     |
+| Monitoring   | None               | Built-in health checks     |
+| Development  | Manual setup       | Automated scripts          |
+
+## Contributing to the Enhanced Version
+
+We welcome contributions to make this enhanced version even better:
+
+1. **Fork this enhanced repository**
+2. **Create feature branches** with descriptive names
+3. **Add comprehensive tests** for new features
+4. **Update documentation** including this README
+5. **Submit pull requests** with detailed descriptions
+
+### 🆕 Development Guidelines
+
+- **Use conventional commits** for clear history
+- **Add integration tests** for new MCP tools
+- **Update Docker configurations** for new services
+- **Maintain backward compatibility** where possible
+
+## License
+
+This enhanced version maintains the same MIT license as the original project.
+
+## Acknowledgments
+
+- **Original Project**: [coleam00/mcp-crawl4ai-rag](https://github.com/coleam00/mcp-crawl4ai-rag) - Thank you for the excellent foundation
+- **Crawl4AI Team**: For the powerful crawling capabilities
+- **Supabase Team**: For the excellent vector database platform
+- **Neo4j Team**: For the graph database technology
+- **MCP Community**: For the innovative protocol design
+
+---
+
+**🚀 Ready to enhance your AI development workflow?** Get started with the enhanced Crawl4AI RAG MCP Server today!

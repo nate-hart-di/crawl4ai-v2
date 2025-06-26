@@ -1,0 +1,26 @@
+{
+    # Global options - works for both environments
+    email {$LETSENCRYPT_EMAIL}
+}
+
+# Neo4j Browser
+{$NEO4J_HOSTNAME} {
+    # For domains, Caddy will automatically use Let's Encrypt
+    # For localhost/port addresses, HTTPS won't be enabled
+    reverse_proxy neo4j:7474
+}
+
+# Supabase Studio
+{$SUPABASE_HOSTNAME} {
+    reverse_proxy studio:3000
+}
+
+# Crawl4AI RAG API
+{$CRAWL4AI_HOSTNAME} {
+    reverse_proxy crawl4ai-rag:8051
+}
+
+# Ollama API
+{$OLLAMA_HOSTNAME} {
+    reverse_proxy ollama:11434
+} 

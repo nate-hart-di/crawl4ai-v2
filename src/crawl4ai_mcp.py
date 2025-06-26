@@ -121,6 +121,19 @@ class Crawl4AIContext:
     reranking_model: Optional[CrossEncoder] = None
     knowledge_validator: Optional[Any] = None  # KnowledgeGraphValidator when available
     repo_extractor: Optional[Any] = None       # DirectNeo4jExtractor when available
+    _crawler_started: bool = False
+
+async def ensure_crawler_started(ctx: Crawl4AIContext) -> None:
+    """Ensure the crawler is started before using it."""
+    if not ctx._crawler_started:
+        print("Starting browser for crawling...")
+        try:
+            await ctx.crawler.__aenter__()
+            ctx._crawler_started = True
+            print("✓ Browser started successfully")
+        except Exception as e:
+            print(f"Failed to start browser: {e}")
+            raise Exception(f"Browser initialization failed: {e}")
 
 @asynccontextmanager
 async def crawl4ai_lifespan(server: FastMCP) -> AsyncIterator[Crawl4AIContext]:
@@ -139,9 +152,9 @@ async def crawl4ai_lifespan(server: FastMCP) -> AsyncIterator[Crawl4AIContext]:
         verbose=False
     )
     
-    # Initialize the crawler
+    # Initialize the crawler (but don't start the browser yet - lazy initialization)
     crawler = AsyncWebCrawler(config=browser_config)
-    await crawler.__aenter__()
+    # Don't start the browser here - it will be started when needed
     
     # Initialize Supabase client
     supabase_client = get_supabase_client()
@@ -190,17 +203,21 @@ async def crawl4ai_lifespan(server: FastMCP) -> AsyncIterator[Crawl4AIContext]:
     else:
         print("Knowledge graph functionality disabled - set USE_KNOWLEDGE_GRAPH=true to enable")
     
+    context = Crawl4AIContext(
+        crawler=crawler,
+        supabase_client=supabase_client,
+        reranking_model=reranking_model,
+        knowledge_validator=knowledge_validator,
+        repo_extractor=repo_extractor
+    )
+    
     try:
-        yield Crawl4AIContext(
-            crawler=crawler,
-            supabase_client=supabase_client,
-            reranking_model=reranking_model,
-            knowledge_validator=knowledge_validator,
-            repo_extractor=repo_extractor
-        )
+        yield context
     finally:
         # Clean up all components
-        await crawler.__aexit__(None, None, None)
+        if context._crawler_started:
+            await crawler.__aexit__(None, None, None)
+            print("✓ Browser closed")
         if knowledge_validator:
             try:
                 await knowledge_validator.close()
@@ -216,11 +233,12 @@ async def crawl4ai_lifespan(server: FastMCP) -> AsyncIterator[Crawl4AIContext]:
 
 # Initialize FastMCP server
 mcp = FastMCP(
-    "mcp-crawl4ai-rag",
+    name="mcp-crawl4ai-rag",
+    version="1.0.0",
     description="MCP server for RAG and web crawling with Crawl4AI",
     lifespan=crawl4ai_lifespan,
     host=os.getenv("HOST", "0.0.0.0"),
-    port=os.getenv("PORT", "8051")
+    port=int(os.getenv("PORT", "8051"))
 )
 
 def rerank_results(model: CrossEncoder, query: str, results: List[Dict[str, Any]], content_key: str = "content") -> List[Dict[str, Any]]:
@@ -401,9 +419,12 @@ async def crawl_single_page(ctx: Context, url: str) -> str:
         Summary of the crawling operation and storage in Supabase
     """
     try:
-        # Get the crawler from the context
-        crawler = ctx.request_context.lifespan_context.crawler
-        supabase_client = ctx.request_context.lifespan_context.supabase_client
+        # Get the context and ensure crawler is started
+        context = ctx.request_context.lifespan_context
+        await ensure_crawler_started(context)
+        
+        crawler = context.crawler
+        supabase_client = context.supabase_client
         
         # Configure the crawl
         run_config = CrawlerRunConfig(cache_mode=CacheMode.BYPASS, stream=False)
@@ -549,9 +570,12 @@ async def smart_crawl_url(ctx: Context, url: str, max_depth: int = 3, max_concur
         JSON string with crawl summary and storage information
     """
     try:
-        # Get the crawler from the context
-        crawler = ctx.request_context.lifespan_context.crawler
-        supabase_client = ctx.request_context.lifespan_context.supabase_client
+        # Get the context and ensure crawler is started
+        context = ctx.request_context.lifespan_context
+        await ensure_crawler_started(context)
+        
+        crawler = context.crawler
+        supabase_client = context.supabase_client
         
         # Determine the crawl strategy
         crawl_results = []
@@ -1843,14 +1867,22 @@ async def crawl_recursive_internal_links(crawler: AsyncWebCrawler, start_urls: L
 
     return results_all
 
+
+
 async def main():
     transport = os.getenv("TRANSPORT", "sse")
+    print(f"Starting MCP server with transport: {transport}")
     if transport == 'sse':
-        # Run the MCP server with sse transport
         await mcp.run_sse_async()
     else:
-        # Run the MCP server with stdio transport
         await mcp.run_stdio_async()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        import traceback
+        print("Fatal error in MCP main:")
+        traceback.print_exc()
+        # Sleep to keep container alive for post-mortem (optional, helpful for debugging in Docker)
+        import time
