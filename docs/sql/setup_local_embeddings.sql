@@ -1,15 +1,8 @@
--- Complete Supabase setup for Crawl4AI RAG with LOCAL embeddings (768 dimensions)
--- This script creates everything needed from scratch for local embeddings
-
--- Enable the pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Drop tables if they exist (for clean rebuild)
 DROP TABLE IF EXISTS crawled_pages CASCADE;
 DROP TABLE IF EXISTS code_examples CASCADE;
 DROP TABLE IF EXISTS sources CASCADE;
-
--- Create the sources table
 CREATE TABLE sources (
     source_id text PRIMARY KEY,
     summary text,
@@ -17,11 +10,9 @@ CREATE TABLE sources (
     created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
     updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-
--- Create the crawled_pages table (for documentation chunks)
 CREATE TABLE crawled_pages (
     id bigserial PRIMARY KEY,
-    url varchar NOT NULL,
+    url varchar NOT NULL, 
     chunk_number integer NOT NULL,
     content text NOT NULL,
     metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
