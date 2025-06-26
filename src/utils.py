@@ -7,9 +7,9 @@ from typing import List, Dict, Any, Optional, Tuple
 import json
 from supabase import create_client, Client
 from urllib.parse import urlparse
-import openai
 import re
 import time
+import requests
 
 # Import sentence transformers for local embeddings
 try:
@@ -18,6 +18,14 @@ try:
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
     SentenceTransformer = None
+
+# Import OpenAI only for chat completions (NOT embeddings)
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    openai = None
 
 # Global model instance for local embeddings (initialized once)
 _local_embedding_model = None
@@ -28,9 +36,8 @@ def get_local_embedding_model():
     
     if _local_embedding_model is None and SENTENCE_TRANSFORMERS_AVAILABLE:
         try:
-            # Use a higher quality model that produces 1024-dimensional embeddings
-            # This avoids the dimension mismatch issue from your previous attempt
-            model_name = os.getenv("LOCAL_EMBEDDING_MODEL", "all-mpnet-base-v2")
+            # Use the model specified in environment or default to nomic-embed-text equivalent
+            model_name = os.getenv("LOCAL_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
             print(f"🔄 Initializing local embedding model ({model_name})...")
             _local_embedding_model = SentenceTransformer(model_name)
             print(f"✅ Local embedding model loaded successfully ({_local_embedding_model.get_sentence_embedding_dimension()} dimensions)")
@@ -40,8 +47,12 @@ def get_local_embedding_model():
     
     return _local_embedding_model
 
-# Load OpenAI API key for embeddings
-openai.api_key = os.getenv("OPENAI_API_KEY")
+def get_ollama_embedding_model():
+    """Get embeddings via Ollama HTTP API."""
+    ollama_url = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+    embedding_model = os.getenv("LOCAL_EMBEDDING_MODEL", "nomic-embed-text:latest")
+    
+    return ollama_url, embedding_model
 
 def get_supabase_client() -> Client:
     """
@@ -60,7 +71,7 @@ def get_supabase_client() -> Client:
 
 def create_embeddings_batch(texts: List[str]) -> List[List[float]]:
     """
-    Create embeddings for multiple texts using either local or OpenAI models.
+    Create embeddings for multiple texts using local models only.
     
     Args:
         texts: List of texts to create embeddings for
@@ -71,12 +82,40 @@ def create_embeddings_batch(texts: List[str]) -> List[List[float]]:
     if not texts:
         return []
     
-    use_local = os.getenv("USE_LOCAL_EMBEDDINGS", "false").lower() == "true"
-    
-    if use_local:
+    # Try Ollama first, then fall back to sentence-transformers
+    try:
+        return _create_ollama_embeddings_batch(texts)
+    except Exception as e:
+        print(f"❌ Ollama embedding failed: {e}. Trying sentence-transformers...")
         return _create_local_embeddings_batch(texts)
-    else:
-        return _create_openai_embeddings_batch(texts)
+
+def _create_ollama_embeddings_batch(texts: List[str]) -> List[List[float]]:
+    """Create embeddings using Ollama HTTP API."""
+    ollama_url, model_name = get_ollama_embedding_model()
+    
+    embeddings = []
+    print(f"🔄 Creating {len(texts)} Ollama embeddings with {model_name}...")
+    
+    for text in texts:
+        try:
+            response = requests.post(
+                f"{ollama_url}/api/embeddings",
+                json={
+                    "model": model_name,
+                    "prompt": text
+                },
+                timeout=30
+            )
+            response.raise_for_status()
+            embedding = response.json()["embedding"]
+            embeddings.append(embedding)
+        except Exception as e:
+            print(f"❌ Failed to create Ollama embedding for text: {e}")
+            # Fall back to zero embedding
+            embeddings.append(_get_zero_embedding_ollama())
+    
+    print(f"✅ Created {len(embeddings)} Ollama embeddings ({len(embeddings[0])} dimensions each)")
+    return embeddings
 
 def _create_local_embeddings_batch(texts: List[str]) -> List[List[float]]:
     """Create embeddings using local sentence-transformers model."""
@@ -89,7 +128,7 @@ def _create_local_embeddings_batch(texts: List[str]) -> List[List[float]]:
     
     try:
         print(f"🔄 Creating {len(texts)} local embeddings...")
-        embeddings = model.encode(texts, show_progress_bar=len(texts) > 10)
+        embeddings = model.encode(texts, show_progress_bar=len(texts) > 10, normalize_embeddings=True)
         # Convert numpy arrays to lists
         result = [emb.tolist() for emb in embeddings]
         print(f"✅ Created {len(result)} local embeddings ({len(result[0])} dimensions each)")
@@ -98,53 +137,9 @@ def _create_local_embeddings_batch(texts: List[str]) -> List[List[float]]:
         print(f"❌ Error creating local embeddings: {e}")
         raise
 
-def _create_openai_embeddings_batch(texts: List[str]) -> List[List[float]]:
-    """Create embeddings using OpenAI API."""
-    max_retries = 3
-    retry_delay = 1.0  # Start with 1 second delay
-    
-    for retry in range(max_retries):
-        try:
-            print(f"🔄 Creating {len(texts)} OpenAI embeddings...")
-            response = openai.embeddings.create(
-                model="text-embedding-3-small", # Hardcoding embedding model for now, will change this later to be more dynamic
-                input=texts
-            )
-            result = [item.embedding for item in response.data]
-            print(f"✅ Created {len(result)} OpenAI embeddings ({len(result[0])} dimensions each)")
-            return result
-        except Exception as e:
-            if retry < max_retries - 1:
-                print(f"❌ Error creating batch embeddings (attempt {retry + 1}/{max_retries}): {e}")
-                print(f"🔄 Retrying in {retry_delay} seconds...")
-                time.sleep(retry_delay)
-                retry_delay *= 2  # Exponential backoff
-            else:
-                print(f"❌ Failed to create batch embeddings after {max_retries} attempts: {e}")
-                # Try creating embeddings one by one as fallback
-                print("🔄 Attempting to create embeddings individually...")
-                embeddings = []
-                successful_count = 0
-                
-                for i, text in enumerate(texts):
-                    try:
-                        individual_response = openai.embeddings.create(
-                            model="text-embedding-3-small",
-                            input=[text]
-                        )
-                        embeddings.append(individual_response.data[0].embedding)
-                        successful_count += 1
-                    except Exception as individual_error:
-                        print(f"❌ Failed to create embedding for text {i}: {individual_error}")
-                        # Add zero embedding as fallback
-                        embeddings.append(_get_zero_embedding())
-                
-                print(f"✅ Successfully created {successful_count}/{len(texts)} embeddings individually")
-                return embeddings
-
 def create_embedding(text: str) -> List[float]:
     """
-    Create an embedding for a single text using either local or OpenAI models.
+    Create an embedding for a single text using local models only.
     
     Args:
         text: Text to create an embedding for
@@ -161,23 +156,24 @@ def create_embedding(text: str) -> List[float]:
 
 def _get_zero_embedding() -> List[float]:
     """Get a zero embedding with the correct dimensions."""
-    use_local = os.getenv("USE_LOCAL_EMBEDDINGS", "false").lower() == "true"
-    
-    if use_local:
-        # For local embeddings, get dimensions from the model
-        model = get_local_embedding_model()
-        if model:
-            dimensions = model.get_sentence_embedding_dimension()
-        else:
-            dimensions = 768  # Default fallback
+    # Try to get dimensions from loaded model
+    model = get_local_embedding_model()
+    if model:
+        dimensions = model.get_sentence_embedding_dimension()
     else:
-        dimensions = 1536  # OpenAI text-embedding-3-small dimensions
+        # Default to common dimensions for nomic-embed-text or similar models
+        dimensions = 768
     
     return [0.0] * dimensions
+
+def _get_zero_embedding_ollama() -> List[float]:
+    """Get a zero embedding for Ollama models (typically 768 dimensions for nomic-embed-text)."""
+    return [0.0] * 768
 
 def generate_contextual_embedding(full_document: str, chunk: str) -> Tuple[str, bool]:
     """
     Generate contextual information for a chunk within a document to improve retrieval.
+    Uses local LLM via Ollama instead of OpenAI.
     
     Args:
         full_document: The complete document text
@@ -188,9 +184,10 @@ def generate_contextual_embedding(full_document: str, chunk: str) -> Tuple[str, 
         - The contextual text that situates the chunk within the document
         - Boolean indicating if contextual embedding was performed
     """
-    model_choice = os.getenv("MODEL_CHOICE")
-    
     try:
+        ollama_url = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+        model_choice = os.getenv("MODEL_CHOICE", "qwen2.5:7b-instruct-q4_K_M")
+        
         # Create the prompt for generating contextual information
         prompt = f"""<document> 
 {full_document[:25000]} 
@@ -201,27 +198,35 @@ Here is the chunk we want to situate within the whole document
 </chunk> 
 Please give a short succinct context to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct context and nothing else."""
 
-        # Call the OpenAI API to generate contextual information
-        response = openai.chat.completions.create(
-            model=model_choice,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that provides concise contextual information."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=200
+        # Call the local Ollama API to generate contextual information
+        response = requests.post(
+            f"{ollama_url}/api/generate",
+            json={
+                "model": model_choice,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.3,
+                    "num_predict": 200
+                }
+            },
+            timeout=60
         )
         
-        # Extract the generated context
-        context = response.choices[0].message.content.strip()
-        
-        # Combine the context with the original chunk
-        contextual_text = f"{context}\n---\n{chunk}"
-        
-        return contextual_text, True
+        if response.status_code == 200:
+            # Extract the generated context
+            context = response.json()["response"].strip()
+            
+            # Combine the context with the original chunk
+            contextual_text = f"{context}\n---\n{chunk}"
+            
+            return contextual_text, True
+        else:
+            print(f"❌ Ollama API error: {response.status_code}")
+            return chunk, False
     
     except Exception as e:
-        print(f"Error generating contextual embedding: {e}. Using original chunk instead.")
+        print(f"❌ Error generating contextual embedding with Ollama: {e}. Using original chunk instead.")
         return chunk, False
 
 def process_chunk_with_context(args):
@@ -516,6 +521,7 @@ def extract_code_blocks(markdown_content: str, min_length: int = 1000) -> List[D
 def generate_code_example_summary(code: str, context_before: str, context_after: str) -> str:
     """
     Generate a summary for a code example using its surrounding context.
+    Uses local LLM via Ollama instead of OpenAI.
     
     Args:
         code: The code example
@@ -525,10 +531,12 @@ def generate_code_example_summary(code: str, context_before: str, context_after:
     Returns:
         A summary of what the code example demonstrates
     """
-    model_choice = os.getenv("MODEL_CHOICE")
-    
-    # Create the prompt
-    prompt = f"""<context_before>
+    try:
+        ollama_url = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+        model_choice = os.getenv("MODEL_CHOICE", "qwen2.5:7b-instruct-q4_K_M")
+        
+        # Create the prompt
+        prompt = f"""<context_before>
 {context_before[-500:] if len(context_before) > 500 else context_before}
 </context_before>
 
@@ -542,22 +550,30 @@ def generate_code_example_summary(code: str, context_before: str, context_after:
 
 Based on the code example and its surrounding context, provide a concise summary (2-3 sentences) that describes what this code example demonstrates and its purpose. Focus on the practical application and key concepts illustrated.
 """
-    
-    try:
-        response = openai.chat.completions.create(
-            model=model_choice,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that provides concise code example summaries."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=100
+        
+        # Call the local Ollama API
+        response = requests.post(
+            f"{ollama_url}/api/generate",
+            json={
+                "model": model_choice,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.3,
+                    "num_predict": 100
+                }
+            },
+            timeout=60
         )
         
-        return response.choices[0].message.content.strip()
-    
+        if response.status_code == 200:
+            return response.json()["response"].strip()
+        else:
+            print(f"❌ Ollama API error: {response.status_code}")
+            return "Code example for demonstration purposes."
+        
     except Exception as e:
-        print(f"Error generating code example summary: {e}")
+        print(f"❌ Error generating code example summary with Ollama: {e}")
         return "Code example for demonstration purposes."
 
 
@@ -705,9 +721,9 @@ def update_source_info(client: Client, source_id: str, summary: str, word_count:
 
 def extract_source_summary(source_id: str, content: str, max_length: int = 500) -> str:
     """
-    Extract a summary for a source from its content using an LLM.
+    Extract a summary for a source from its content using a local LLM.
     
-    This function uses the OpenAI API to generate a concise summary of the source content.
+    This function uses the local Ollama API to generate a concise summary of the source content.
     
     Args:
         source_id: The source ID (domain)
@@ -723,43 +739,51 @@ def extract_source_summary(source_id: str, content: str, max_length: int = 500) 
     if not content or len(content.strip()) == 0:
         return default_summary
     
-    # Get the model choice from environment variables
-    model_choice = os.getenv("MODEL_CHOICE")
-    
-    # Limit content length to avoid token limits
-    truncated_content = content[:25000] if len(content) > 25000 else content
-    
-    # Create the prompt for generating the summary
-    prompt = f"""<source_content>
+    try:
+        ollama_url = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434")
+        model_choice = os.getenv("MODEL_CHOICE", "qwen2.5:7b-instruct-q4_K_M")
+        
+        # Limit content length to avoid token limits
+        truncated_content = content[:25000] if len(content) > 25000 else content
+        
+        # Create the prompt for generating the summary
+        prompt = f"""<source_content>
 {truncated_content}
 </source_content>
 
 The above content is from the documentation for '{source_id}'. Please provide a concise summary (3-5 sentences) that describes what this library/tool/framework is about. The summary should help understand what the library/tool/framework accomplishes and the purpose.
 """
-    
-    try:
-        # Call the OpenAI API to generate the summary
-        response = openai.chat.completions.create(
-            model=model_choice,
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant that provides concise library/tool/framework summaries."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3,
-            max_tokens=150
+        
+        # Call the local Ollama API to generate the summary
+        response = requests.post(
+            f"{ollama_url}/api/generate",
+            json={
+                "model": model_choice,
+                "prompt": prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.3,
+                    "num_predict": 150
+                }
+            },
+            timeout=60
         )
         
-        # Extract the generated summary
-        summary = response.choices[0].message.content.strip()
-        
-        # Ensure the summary is not too long
-        if len(summary) > max_length:
-            summary = summary[:max_length] + "..."
+        if response.status_code == 200:
+            # Extract the generated summary
+            summary = response.json()["response"].strip()
             
-        return summary
-    
+            # Ensure the summary is not too long
+            if len(summary) > max_length:
+                summary = summary[:max_length] + "..."
+                
+            return summary
+        else:
+            print(f"❌ Ollama API error: {response.status_code}")
+            return default_summary
+        
     except Exception as e:
-        print(f"Error generating summary with LLM for {source_id}: {e}. Using default summary.")
+        print(f"❌ Error generating summary with local LLM for {source_id}: {e}. Using default summary.")
         return default_summary
 
 

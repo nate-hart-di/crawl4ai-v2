@@ -117,7 +117,7 @@ The server provides comprehensive web crawling, search, and knowledge graph tool
 - **[Docker/Docker Desktop](https://www.docker.com/products/docker-desktop/)** - Required for the full-service architecture
 - **[Git](https://git-scm.com/)** - For repository cloning and version control
 - **[Supabase Account](https://supabase.com/)** - For vector database and RAG functionality
-- **[OpenAI API Key](https://platform.openai.com/api-keys)** - For embeddings and LLM operations
+- **Local LLM Models** - Downloaded via Ollama (no API keys required)
 
 ### Optional but Recommended
 
@@ -262,8 +262,11 @@ TRANSPORT=sse
 # ===========================================
 # AI/LLM Configuration
 # ===========================================
-OPENAI_API_KEY=your_openai_api_key
-MODEL_CHOICE=gpt-4o-mini
+# Local embedding configuration (no API keys needed)
+USE_LOCAL_EMBEDDINGS=true
+LOCAL_EMBEDDING_MODEL=nomic-embed-text:latest
+MODEL_CHOICE=qwen2.5:7b-instruct-q4_K_M
+OLLAMA_URL=http://host.docker.internal:11434
 
 # Optional: Local Ollama integration
 OLLAMA_BASE_URL=http://localhost:8004
